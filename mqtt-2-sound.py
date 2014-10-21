@@ -10,8 +10,6 @@ config_f.close()
 
 # set up the mixer at 44100 frequency, with 16 signed bits per sample, 1 channel, with a 2048 sample buffer
 pygame.mixer.init(44100, -16, 1, 2048)
-# set volume to maximum
-pygame.mixer.music.set_volume(1.0)
 
 currently_playing_file = ""
 
@@ -19,7 +17,8 @@ currently_playing_file = ""
 def on_message(obj, msg):
     print "Received %s on topic %s" % (msg.payload, msg.topic)
     if msg.topic == 'door/inner/opened/username':
-        play("audio/%s_announce.ogg" % msg.payload)
+        # Set volume to 50% for this clip
+        play("audio/%s_announce.ogg" % msg.payload, 0.5)
     elif msg.topic == 'door/outer/buzzer':
         play("audio/buzzer.ogg")
     elif msg.topic == 'door/outer/opened/username':
@@ -28,13 +27,14 @@ def on_message(obj, msg):
         play("audio/doorbell.ogg")
 
 
-def play(filename):
+def play(filename,level = 1.0):
     global currently_playing_file
     if os.path.isfile(filename):
         if (not pygame.mixer.music.get_busy()) or (currently_playing_file is not filename):
             print "Playing %s" % filename
             currently_playing_file = filename
             pygame.mixer.music.load(filename)
+            pygame.mixer.music.set_volume(level)
             pygame.mixer.music.play()
 
 
