@@ -16,7 +16,8 @@ pygame.mixer.music.set_volume(1.0)
 currently_playing_file = ""
 
 
-def on_message(mosq, obj, msg):
+def on_message(obj, msg):
+    print "Received %s on topic %s" % (msg.payload, msg.topic)
     if msg.topic == 'door/inner/opened/username':
         play("audio/%s_announce.ogg" % msg.payload)
     elif msg.topic == 'door/outer/buzzer':
@@ -31,6 +32,7 @@ def play(filename):
     global currently_playing_file
     if os.path.isfile(filename):
         if (not pygame.mixer.music.get_busy()) or (currently_playing_file is not filename):
+            print "Playing %s" % filename
             currently_playing_file = filename
             pygame.mixer.music.load(filename)
             pygame.mixer.music.play()
@@ -46,6 +48,6 @@ mqttc.subscribe("door/inner/doorbell")
 mqttc.subscribe("door/inner/opened/username")
 mqttc.on_message = on_message
 
-while mqttc.loop() == 0:
+while mqttc.loop(timeout=100) == 0:
     pass
 
