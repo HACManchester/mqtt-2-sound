@@ -2,30 +2,36 @@
 import mosquitto
 import yaml
 import pygame
+import time
 import os
+import RPi.GPIO as GPIO
+
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(3, GPIO.OUT)
+GPIO.output(3, GPIO.LOW)
 
 config_f = open('config.yaml')
 config = yaml.safe_load(config_f)
 config_f.close()
 
 # set up the mixer at 44100 frequency, with 16 signed bits per sample, 1 channel, with a 2048 sample buffer
-pygame.mixer.init(44100, -16, 1, 2048)
+#pygame.mixer.init(44100, -16, 1, 2048)
 
 currently_playing_file = ""
 
 
-def on_message(obj, msg):
+def on_message(obj, udata, msg):
     print "Received %s on topic %s" % (msg.payload, msg.topic)
-    if msg.topic == 'door/inner/opened/username':
-        # Set volume to 50% for this clip
-        play("audio/%s_announce.ogg" % msg.payload, 0.5)
-    elif msg.topic == 'door/outer/buzzer':
-        play("audio/buzzer.ogg")
-    elif msg.topic == 'door/outer/opened/username':
-        play("audio/outer_door_opened.ogg")
-    elif msg.topic == 'door/inner/doorbell':
-        play("audio/doorbell.ogg")
-
+    if msg.topic == 'door/inner/doorbell':
+        GPIO.output(3, GPIO.HIGH)
+        os.system("ogg123 audio/doorbell.ogg")
+        time.sleep(5)
+        GPIO.output(3, GPIO.LOW)
+    elif msg.topic == 'door/inner/opened/username':
+        os.system("ogg123 audio/outer_door_opened.ogg")
+        time.sleep(1)
+        print "Person: %s has arrived." % (msg.payload)
+        os.system("espeak -v en-uk-rp \"" + msg.payload + " has arrived\" ");
 
 def play(filename,level = 1.0):
     global currently_playing_file
@@ -48,6 +54,6 @@ mqttc.subscribe("door/inner/doorbell")
 mqttc.subscribe("door/inner/opened/username")
 mqttc.on_message = on_message
 
-while mqttc.loop(timeout=100) == 0:
+while mqttc.loop() == 0:
     pass
 
