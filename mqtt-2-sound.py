@@ -31,7 +31,7 @@ def on_message(obj, udata, msg):
         os.system("ogg123 audio/outer_door_opened.ogg")
         time.sleep(1)
         print "Person: %s has arrived." % (msg.payload)
-        os.system("espeak -v en-uk-rp \"" + msg.payload + " has arrived\" ");
+        os.system("pico2wave -w /tmp/test.wav \"Attention, " + msg.payload + " has arrived.\"; aplay /tmp/test.wav; rm /tmp/test.wav");
 
 def play(filename,level = 1.0):
     global currently_playing_file
